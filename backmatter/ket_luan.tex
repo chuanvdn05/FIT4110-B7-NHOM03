@@ -1,7 +1,13 @@
+```latex
 \UnnumberedChapter{KẾT LUẬN}
 
-Quá trình thực tập tốt nghiệp đã giúp sinh viên có cơ hội tiếp cận môi trường làm việc thực tế, vận dụng kiến thức đã học vào các công việc chuyên môn và hiểu rõ hơn về yêu cầu của ngành Công nghệ thông tin trong doanh nghiệp.
+Trong khuôn khổ học phần \textbf{Dịch vụ kết nối và Công nghệ nền tảng (FIT4110)}, nhóm B7 đã nghiên cứu, thiết kế và triển khai thành công \textbf{Notification Service} cho hệ thống \textbf{Smart Campus Operations Platform}. Notification Service được xây dựng theo kiến trúc Microservices với nhiệm vụ tiếp nhận các cảnh báo từ Core Business Service, gửi thông báo tới người dùng thông qua Telegram Bot API, lưu trữ lịch sử xử lý vào cơ sở dữ liệu PostgreSQL và cung cấp dữ liệu cho Analytics Service phục vụ thống kê và giám sát.
 
-Bên cạnh những kết quả đạt được, sinh viên cũng nhận thấy một số hạn chế của bản thân như kinh nghiệm thực tế chưa nhiều, kỹ năng xử lý tình huống còn cần tiếp tục rèn luyện và khả năng làm việc với các hệ thống lớn cần được cải thiện thêm.
+Trong quá trình thực hiện đề tài, nhóm đã nghiên cứu và áp dụng nhiều công nghệ hiện đại như FastAPI, Docker Compose, PostgreSQL, RESTful API và OpenAPI Specification. Đồng thời, hệ thống được xây dựng với các cơ chế quan trọng như Bearer Authentication, Retry Mechanism và Idempotency nhằm đảm bảo tính ổn định, an toàn và hạn chế việc gửi trùng thông báo.
 
-Trong thời gian tới, sinh viên cần tiếp tục học tập, rèn luyện kỹ năng chuyên môn, nâng cao khả năng tự học, kỹ năng làm việc nhóm và kỹ năng giải quyết vấn đề để đáp ứng tốt hơn yêu cầu công việc sau khi tốt nghiệp.
+Sau khi hoàn thành triển khai, Notification Service đã được kiểm thử thành công trên môi trường Docker Compose. Kết quả kiểm thử cho thấy hệ thống hoạt động ổn định, các container đều đạt trạng thái Healthy, các API phản hồi đúng yêu cầu và quá trình gửi thông báo tới Telegram được thực hiện thành công. Bên cạnh đó, Notification Service đã tích hợp thành công với Core Business Service (B6) trong vai trò Consumer và Analytics Service (B5) trong vai trò Provider, đáp ứng đầy đủ yêu cầu tích hợp giữa các nhóm trong hệ thống Smart Campus.
+
+Thông qua đề tài này, nhóm không chỉ củng cố kiến thức về lập trình dịch vụ, RESTful API, Docker và cơ sở dữ liệu mà còn tích lũy được nhiều kinh nghiệm trong việc xây dựng hệ thống Microservices, thiết kế API theo chuẩn OpenAPI và phối hợp tích hợp giữa nhiều nhóm phát triển. Đây là nền tảng quan trọng giúp nhóm có thêm kinh nghiệm trong việc phát triển các hệ thống phần mềm phân tán trong thực tế.
+
+Mặc dù đã hoàn thành đầy đủ các yêu cầu của bài tập lớn, Notification Service vẫn còn một số hạn chế như mới hỗ trợ kênh Telegram, chưa triển khai Dashboard quản trị trực quan và chưa tích hợp Message Queue để xử lý các thông báo với quy mô lớn. Trong tương lai, hệ thống có thể được mở rộng bằng cách bổ sung các kênh Email, SMS, Discord, triển khai RabbitMQ hoặc Apache Kafka, xây dựng Dashboard thời gian thực và áp dụng Kubernetes nhằm nâng cao khả năng mở rộng và tính sẵn sàng của hệ thống.
+```

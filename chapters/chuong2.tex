@@ -1,59 +1,583 @@
-\chapter{NỘI DUNG THỰC TẬP}
+\chapter{PHÂN TÍCH VÀ THIẾT KẾ HỆ THỐNG}
 
-\textit{Lưu ý: Sinh viên cần cập nhật báo cáo theo từng tuần dựa trên công việc thực tế đã thực hiện.}
+\chapter{PHÂN TÍCH, THIẾT KẾ VÀ TRIỂN KHAI NOTIFICATION SERVICE}
 
-\section{Mô tả công việc thực tập}
+```latex
+\section{Kiến trúc Notification Service}
 
-Sinh viên mô tả tổng quan công việc được giao trong thời gian thực tập, bao gồm mục tiêu công việc, phạm vi công việc, công cụ sử dụng và sản phẩm/kết quả cần đạt được.
+Notification Service là dịch vụ do nhóm B7 phát triển trong hệ thống Smart Campus Operations Platform. Service này được xây dựng theo kiến trúc Microservices và triển khai bằng framework FastAPI trên nền tảng Python 3.11. Notification Service có nhiệm vụ tiếp nhận các cảnh báo (Alert) từ Core Business Service, xử lý yêu cầu gửi thông báo, lưu lịch sử xử lý và cung cấp dữ liệu cho Analytics Service.
 
-\section{Công việc thực tập}
+Khác với Core Business Service, Notification Service không thực hiện việc phân tích dữ liệu hay xử lý nghiệp vụ. Toàn bộ các quyết định nghiệp vụ như phát hiện sự kiện bất thường, xác định mức độ cảnh báo hay lựa chọn thời điểm gửi cảnh báo đều được thực hiện bởi Core Business Service. Notification Service chỉ đảm nhận việc truyền tải thông tin cảnh báo đến người nhận và ghi nhận kết quả xử lý.
 
-Sinh viên trình bày chi tiết các nhóm công việc đã thực hiện. Ví dụ:
+Kiến trúc của Notification Service được xây dựng theo mô hình nhiều tầng (Layered Architecture), bao gồm các thành phần chính như FastAPI Application, PostgreSQL Database và Mock Channel Service. Các thành phần này được triển khai độc lập trong các Docker Container và giao tiếp với nhau thông qua mạng nội bộ Docker.
+
+Quy trình xử lý của Notification Service được thực hiện theo các bước sau:
+
+\begin{enumerate}
+\item Core Business Service gửi yêu cầu POST đến endpoint \texttt{/api/notifications/alerts}.
+\item FastAPI tiếp nhận yêu cầu và thực hiện xác thực Bearer Token.
+\item Hệ thống kiểm tra tính hợp lệ của dữ liệu đầu vào bằng Pydantic.
+\item Notification Service kiểm tra Alert ID để tránh gửi trùng (Idempotency).
+\item Hệ thống thực hiện gửi thông báo tới Telegram hoặc Mock Channel.
+\item Nếu quá trình gửi thất bại, Notification Service tự động thực hiện Retry theo số lần đã cấu hình.
+\item Kết quả xử lý được lưu vào cơ sở dữ liệu PostgreSQL.
+\item Analytics Service truy cập API nội bộ để lấy lịch sử gửi thông báo phục vụ thống kê.
+\end{enumerate}
+
+Việc phân chia kiến trúc theo các thành phần độc lập giúp Notification Service có khả năng mở rộng dễ dàng. Khi cần bổ sung thêm các kênh gửi thông báo như Email, SMS hoặc Discord, chỉ cần bổ sung module gửi tương ứng mà không ảnh hưởng đến các thành phần còn lại của hệ thống.
+
+\begin{figure}[H]
+\centering
+\fbox{
+\begin{minipage}{0.92\textwidth}
+\centering
+
+Core Business Service (B6)
+
+$\downarrow$
+
+FastAPI Notification API
+
+$\downarrow$
+
+Authentication
+
+$\downarrow$
+
+Validation
+
+$\downarrow$
+
+Idempotency Check
+
+$\downarrow$
+
+Retry Mechanism
+
+$\downarrow$
+
+Telegram / Mock Channel
+
+$\downarrow$
+
+PostgreSQL Database
+
+$\downarrow$
+
+Analytics Service (B5)
+
+\end{minipage}
+}
+\caption{Kiến trúc xử lý của Notification Service}
+\label{fig:notification-architecture}
+\end{figure}
+
+
+\section{Kiến trúc Docker Compose}
+
+Để đảm bảo khả năng triển khai nhanh chóng và đồng nhất trên nhiều môi trường khác nhau, Notification Service được đóng gói bằng Docker và quản lý bằng Docker Compose.
+
+Trong dự án của nhóm B7, file \texttt{docker-compose.yml} định nghĩa ba container chính bao gồm:
 
 \begin{itemize}
-    \item Tìm hiểu quy trình phát triển phần mềm tại doanh nghiệp.
-    \item Cài đặt môi trường phát triển.
-    \item Tìm hiểu tài liệu yêu cầu, tài liệu thiết kế hoặc mã nguồn.
-    \item Tham gia xây dựng, kiểm thử hoặc bảo trì một chức năng cụ thể.
-    \item Viết tài liệu hướng dẫn sử dụng hoặc tài liệu kỹ thuật.
+\item notification-api
+\item db
+\item mock-channel
 \end{itemize}
 
-\section{Chi tiết nhật ký thực tập}
+Container \textbf{notification-api} chứa toàn bộ ứng dụng FastAPI. Container này được build trực tiếp từ Dockerfile của dự án và công khai cổng 8000 để các service khác có thể gửi yêu cầu thông qua REST API.
 
-Sinh viên có thể trình bày nhật ký thực tập theo bảng dưới đây.
+Container \textbf{db} sử dụng image \texttt{postgres:15-alpine}. Đây là nơi lưu toàn bộ lịch sử gửi thông báo. Dữ liệu được lưu trên Docker Volume nhằm đảm bảo không bị mất khi container được khởi động lại.
 
-\begin{longtable}{|c|p{3cm}|p{6cm}|p{4cm}|}
-\caption{Nhật ký thực tập}
-\label{tab:nhat-ky-thuc-tap} \\
-\hline
-\textbf{Tuần} & \textbf{Thời gian} & \textbf{Nội dung công việc} & \textbf{Kết quả đạt được} \\
-\hline
-\endfirsthead
+Container \textbf{mock-channel} được xây dựng nhằm mô phỏng dịch vụ gửi thông báo trong quá trình phát triển và kiểm thử. Service này chạy độc lập trên cổng 9000 và cung cấp endpoint \texttt{/health} để Notification Service kiểm tra trạng thái hoạt động.
 
-\hline
-\textbf{Tuần} & \textbf{Thời gian} & \textbf{Nội dung công việc} & \textbf{Kết quả đạt được} \\
-\hline
-\endhead
+Ba container được kết nối thông qua mạng nội bộ \texttt{team-internal}. Ngoài ra Notification Service còn tham gia mạng \texttt{class-net} nhằm phục vụ việc tích hợp với các nhóm khác trong quá trình thực hiện bài tập lớn.
 
-1 & Từ ngày ... đến ngày ...
-& Tìm hiểu doanh nghiệp, phòng ban thực tập, quy trình làm việc.
-& Nắm được cơ cấu tổ chức, nội quy và công việc được giao. \\
-\hline
+Một điểm đáng chú ý trong Docker Compose là toàn bộ các service đều được cấu hình Health Check. Notification API chỉ được khởi động sau khi PostgreSQL và Mock Channel đã chuyển sang trạng thái Healthy. Điều này giúp giảm thiểu lỗi kết nối khi các service khởi động đồng thời.
 
-2 & Từ ngày ... đến ngày ...
-& Cài đặt môi trường làm việc, tìm hiểu công nghệ sử dụng trong dự án.
-& Cài đặt thành công môi trường, chạy thử dự án mẫu. \\
-\hline
+Ngoài ra Docker Compose còn sử dụng file \texttt{.env} để quản lý các biến môi trường như AUTH\_TOKEN, POSTGRES\_HOST, POSTGRES\_USER, POSTGRES\_PASSWORD và APP\_PORT. Việc tách cấu hình ra khỏi mã nguồn giúp hệ thống dễ dàng triển khai trên nhiều môi trường khác nhau mà không cần sửa đổi source code.
 
-3 & Từ ngày ... đến ngày ...
-& Tham gia thực hiện một số nhiệm vụ được giao trong dự án.
-& Hoàn thành các công việc theo yêu cầu của người hướng dẫn. \\
-\hline
+\begin{figure}[H]
+\centering
+\fbox{
+\begin{minipage}{0.9\textwidth}
+\centering
 
-4 & Từ ngày ... đến ngày ...
-& Kiểm thử, chỉnh sửa lỗi, hoàn thiện tài liệu hoặc báo cáo kết quả.
-& Hoàn thiện sản phẩm/công việc được giao. \\
-\hline
+Docker Host
 
-\end{longtable}
-\Nguon{Sinh viên tổng hợp}
+\vspace{0.3cm}
+
+notification-api
+
+$\leftrightarrow$
+
+PostgreSQL
+
+$\leftrightarrow$
+
+mock-channel
+
+\end{minipage}
+}
+\caption{Kiến trúc triển khai Docker Compose}
+\label{fig:docker-compose}
+\end{figure}
+
+
+\section{Dockerfile và quá trình Build ứng dụng}
+
+Notification Service được đóng gói bằng Dockerfile sử dụng kỹ thuật Multi-stage Build nhằm tối ưu kích thước image và rút ngắn thời gian triển khai.
+
+Giai đoạn đầu tiên (Builder Stage) sử dụng image \texttt{python:3.11-slim}. Trong giai đoạn này hệ thống tạo môi trường Python Virtual Environment và cài đặt toàn bộ thư viện từ file \texttt{requirements.txt}. Việc cài đặt thư viện ở Builder Stage giúp tránh phải cài đặt lại khi build Runtime Image.
+
+Sau khi hoàn thành Builder Stage, Docker chuyển sang Runtime Stage. Runtime Image tiếp tục sử dụng \texttt{python:3.11-slim} nhưng chỉ sao chép môi trường Python đã được chuẩn bị trước đó cùng với thư mục \texttt{src}. Điều này giúp giảm đáng kể kích thước image cuối cùng.
+
+Dockerfile cũng tạo một tài khoản người dùng riêng (appuser) để chạy ứng dụng thay vì sử dụng tài khoản root. Đây là một biện pháp bảo mật giúp hạn chế rủi ro khi container gặp sự cố.
+
+Sau khi hoàn tất việc sao chép mã nguồn, Docker cấu hình Health Check nhằm kiểm tra endpoint \texttt{/health}. Nếu endpoint phản hồi thành công thì container sẽ được Docker đánh dấu ở trạng thái Healthy.
+
+Cuối cùng Docker sử dụng Uvicorn để khởi động FastAPI thông qua lệnh:
+
+\begin{center}
+\texttt{uvicorn notify\_app.main:app --app-dir src}
+\end{center}
+
+Nhờ sử dụng Multi-stage Build, image của Notification Service có kích thước nhỏ hơn, tốc độ build nhanh hơn và thuận tiện cho việc triển khai trên nhiều môi trường khác nhau.
+
+\begin{figure}[H]
+\centering
+\fbox{
+\begin{minipage}{0.92\textwidth}
+\centering
+
+python:3.11-slim
+
+$\downarrow$
+
+Builder Stage
+
+$\downarrow$
+
+Virtual Environment
+
+$\downarrow$
+
+Install Requirements
+
+$\downarrow$
+
+Runtime Stage
+
+$\downarrow$
+
+Copy Source Code
+
+$\downarrow$
+
+Health Check
+
+$\downarrow$
+
+Uvicorn
+
+\end{minipage}
+}
+\caption{Quy trình Build Docker Image của Notification Service}
+\label{fig:dockerfile-build}
+\end{figure}
+```
+```latex
+\section{Framework FastAPI}
+
+Notification Service của nhóm B7 được phát triển bằng framework FastAPI trên nền tảng Python 3.11. FastAPI là một framework hiện đại dành cho việc xây dựng RESTful API với hiệu năng cao, hỗ trợ bất đồng bộ (Asynchronous Programming) và tự động sinh tài liệu OpenAPI.
+
+Trong dự án, toàn bộ các API đều được định nghĩa trong file \texttt{src/notify\_app/main.py}. Đây là module trung tâm của hệ thống, chịu trách nhiệm khởi tạo ứng dụng FastAPI, định nghĩa các Request Model, Response Model, các Endpoint cũng như toàn bộ nghiệp vụ xử lý thông báo.
+
+Khi Notification Service được khởi động, FastAPI sẽ tạo đối tượng Application và đăng ký toàn bộ Router. Đồng thời, hàm Startup sẽ được gọi để khởi tạo cơ sở dữ liệu PostgreSQL, tạo bảng lưu lịch sử thông báo nếu bảng chưa tồn tại và kiểm tra trạng thái hoạt động của hệ thống.
+
+Ngoài việc định nghĩa các Endpoint, FastAPI còn được sử dụng để xây dựng các Dependency phục vụ xác thực Bearer Token, xử lý ngoại lệ (Exception Handler), kiểm tra dữ liệu đầu vào bằng Pydantic và chuẩn hóa Response trả về cho các Service khác.
+
+Việc sử dụng FastAPI mang lại nhiều lợi ích như:
+
+\begin{itemize}
+\item Hiệu năng cao.
+\item Tự động sinh tài liệu OpenAPI.
+\item Kiểm tra dữ liệu đầu vào bằng Pydantic.
+\item Hỗ trợ Dependency Injection.
+\item Dễ dàng mở rộng các API mới.
+\end{itemize}
+
+Nhờ đó Notification Service vừa đảm bảo hiệu năng xử lý vừa dễ dàng tích hợp với các nhóm khác trong hệ thống Smart Campus.
+
+
+\section{Cơ chế xác thực (Authentication)}
+
+Để đảm bảo chỉ các Service hợp lệ mới có quyền sử dụng Notification Service, nhóm B7 triển khai cơ chế xác thực Bearer Token cho toàn bộ các API nội bộ.
+
+Trong source code, cơ chế xác thực được cài đặt thông qua hàm:
+
+\begin{center}
+\texttt{verify\_bearer\_token()}
+\end{center}
+
+Hàm này được khai báo dưới dạng Dependency của FastAPI và được gắn trực tiếp vào các Endpoint cần bảo vệ.
+
+Khi một yêu cầu được gửi đến Notification Service, hệ thống sẽ kiểm tra Header Authorization. Nếu Header không tồn tại hoặc Token không đúng với giá trị đã cấu hình trong biến môi trường AUTH\_TOKEN thì Notification Service sẽ từ chối yêu cầu và trả về mã lỗi HTTP 401 Unauthorized.
+
+Quá trình xác thực được thực hiện trước khi hệ thống tiến hành xử lý nghiệp vụ nhằm hạn chế các truy cập trái phép từ bên ngoài.
+
+Trong quá trình triển khai bài tập lớn, nhóm sử dụng Bearer Token:
+
+\begin{center}
+\texttt{Bearer local-dev-token}
+\end{center}
+
+Việc tách Token ra khỏi source code và lưu trong biến môi trường giúp hệ thống dễ dàng thay đổi cấu hình khi triển khai trên các môi trường khác nhau mà không cần sửa đổi mã nguồn.
+
+
+\section{Cơ chế Retry và Idempotency}
+
+Một trong những yêu cầu quan trọng của Notification Service là đảm bảo thông báo được gửi thành công với độ tin cậy cao, đồng thời tránh hiện tượng gửi trùng cùng một cảnh báo.
+
+Để đáp ứng yêu cầu này, nhóm B7 đã triển khai hai cơ chế quan trọng là Retry và Idempotency.
+
+\subsection{Retry Mechanism}
+
+Quá trình gửi thông báo được thực hiện thông qua hàm:
+
+\begin{center}
+\texttt{send\_with\_retry()}
+\end{center}
+
+Hàm này chịu trách nhiệm gửi thông báo đến Telegram hoặc Mock Channel Service. Nếu quá trình gửi thất bại do lỗi mạng hoặc dịch vụ đích không phản hồi, hệ thống sẽ tự động thực hiện gửi lại theo số lần đã được cấu hình trong biến môi trường RETRY\_MAX\_ATTEMPTS.
+
+Ở mỗi lần Retry, Notification Service sẽ ghi nhận số lần thử, trạng thái xử lý và nội dung lỗi. Khi việc gửi thành công, hệ thống sẽ dừng Retry và cập nhật trạng thái Delivered vào cơ sở dữ liệu.
+
+Nếu vượt quá số lần Retry cho phép mà vẫn không thành công, Notification Service sẽ đánh dấu trạng thái Failed và lưu nguyên nhân lỗi để phục vụ việc phân tích sau này.
+
+Cơ chế Retry giúp tăng khả năng gửi thành công trong các trường hợp lỗi tạm thời như mất kết nối mạng hoặc dịch vụ Telegram phản hồi chậm.
+
+
+\subsection{Idempotency}
+
+Ngoài Retry, Notification Service còn triển khai cơ chế chống gửi trùng (Idempotency).
+
+Mỗi Alert được định danh duy nhất thông qua trường Alert ID. Trước khi gửi thông báo, Notification Service sẽ truy vấn cơ sở dữ liệu PostgreSQL để kiểm tra xem Alert ID này đã từng được xử lý hay chưa.
+
+Nếu Alert đã được gửi thành công trước đó, hệ thống sẽ không thực hiện gửi lại mà trả về trạng thái Duplicate.
+
+Việc kiểm tra Alert ID giúp tránh tình trạng người dùng nhận nhiều thông báo giống nhau khi Core Business Service gửi lặp hoặc khi xảy ra lỗi mạng khiến Client gửi lại cùng một Request.
+
+Đây là một trong những yêu cầu quan trọng của hệ thống phân tán nhằm đảm bảo tính nhất quán của dữ liệu và nâng cao trải nghiệm của người sử dụng.
+
+Hình \ref{fig:retry-idempotency} mô tả quy trình Retry kết hợp với cơ chế Idempotency được triển khai trong Notification Service.
+
+\begin{figure}[H]
+\centering
+\fbox{
+\begin{minipage}{0.92\textwidth}
+\centering
+
+Receive Alert
+
+$\downarrow$
+
+Check Alert ID
+
+$\downarrow$
+
+Duplicate ?
+
+Yes $\rightarrow$ Return Duplicate
+
+No
+
+$\downarrow$
+
+Send Notification
+
+$\downarrow$
+
+Success ?
+
+Yes $\rightarrow$ Save Database
+
+No
+
+$\downarrow$
+
+Retry
+
+$\downarrow$
+
+Max Attempts
+
+$\downarrow$
+
+Failed
+
+\end{minipage}
+}
+\caption{Quy trình Retry và Idempotency}
+\label{fig:retry-idempotency}
+\end{figure}
+```
+```latex
+\section{Thiết kế cơ sở dữ liệu}
+
+Để đảm bảo khả năng lưu trữ lịch sử xử lý thông báo và phục vụ việc thống kê sau này, Notification Service sử dụng hệ quản trị cơ sở dữ liệu PostgreSQL. Trong quá trình khởi động, hệ thống sẽ tự động kiểm tra và tạo bảng dữ liệu nếu bảng chưa tồn tại thông qua hàm khởi tạo cơ sở dữ liệu trong file \texttt{main.py}.
+
+Cơ sở dữ liệu của Notification Service được thiết kế đơn giản với một bảng chính là \texttt{notification\_logs}. Bảng này lưu toàn bộ thông tin liên quan đến quá trình xử lý thông báo, bao gồm mã cảnh báo, nội dung thông báo, mức độ nghiêm trọng, kênh gửi, trạng thái gửi, số lần thử gửi lại và thời gian xử lý.
+
+Các trường dữ liệu chính của bảng được mô tả trong Bảng \ref{tab:notification-log}.
+
+\begin{table}[H]
+\centering
+\caption{Cấu trúc bảng notification\_logs}
+\label{tab:notification-log}
+\begin{tabular}{|l|l|p{7cm}|}
+\hline
+\textbf{Tên trường} & \textbf{Kiểu dữ liệu} & \textbf{Ý nghĩa} \\ \hline
+alert\_id & TEXT & Mã định danh duy nhất của cảnh báo \\ \hline
+severity & TEXT & Mức độ nghiêm trọng của cảnh báo \\ \hline
+message & TEXT & Nội dung cảnh báo \\ \hline
+target & TEXT & Đối tượng nhận thông báo \\ \hline
+channel & TEXT & Kênh gửi thông báo \\ \hline
+status & TEXT & Trạng thái xử lý \\ \hline
+attempts & INTEGER & Số lần gửi thông báo \\ \hline
+detail & TEXT & Chi tiết kết quả xử lý \\ \hline
+created\_at & TIMESTAMP & Thời gian tạo bản ghi \\ \hline
+updated\_at & TIMESTAMP & Thời gian cập nhật cuối cùng \\ \hline
+\end{tabular}
+\end{table}
+
+Việc lưu trữ lịch sử gửi thông báo giúp Notification Service hỗ trợ tốt cho việc kiểm tra trạng thái thông báo, chống gửi trùng và cung cấp dữ liệu cho Analytics Service.
+
+\section{Thiết kế RESTful API}
+
+Notification Service giao tiếp với các service khác thông qua giao thức REST API sử dụng định dạng dữ liệu JSON. Tất cả các API đều được xây dựng trên nền tảng FastAPI và tuân thủ các nguyên tắc RESTful.
+
+Bảng \ref{tab:api-list} trình bày các API chính được triển khai trong hệ thống.
+
+\begin{table}[H]
+\centering
+\caption{Danh sách API của Notification Service}
+\label{tab:api-list}
+\begin{tabular}{|c|l|p{8cm}|}
+\hline
+\textbf{Method} & \textbf{Endpoint} & \textbf{Chức năng} \\ \hline
+GET & /health & Kiểm tra trạng thái hoạt động của service \\ \hline
+POST & /api/notifications/alerts & Tiếp nhận yêu cầu gửi thông báo từ Core Business Service \\ \hline
+GET & /internal/notifications/logs & Truy xuất lịch sử gửi thông báo \\ \hline
+GET & /internal/notifications/\{id\}/status & Kiểm tra trạng thái của một Alert \\ \hline
+POST & /internal/notifications/\{id\}/retry & Gửi lại thông báo khi cần thiết \\ \hline
+\end{tabular}
+\end{table}
+
+Tất cả các API đều sử dụng Bearer Token để xác thực và trả dữ liệu dưới dạng JSON.
+
+\section{Đặc tả OpenAPI}
+
+Để chuẩn hóa việc tích hợp giữa các nhóm trong hệ thống Smart Campus, Notification Service xây dựng tài liệu OpenAPI theo chuẩn OpenAPI Specification 3.x.
+
+File đặc tả được lưu tại:
+
+\begin{center}
+\texttt{contracts/team-notify.openapi.yaml}
+\end{center}
+
+Tài liệu này mô tả đầy đủ:
+
+\begin{itemize}
+\item Danh sách Endpoint.
+\item HTTP Method.
+\item Request Body.
+\item Response.
+\item HTTP Status Code.
+\item Security Scheme.
+\item Data Model.
+\end{itemize}
+
+Việc sử dụng OpenAPI giúp các nhóm phát triển có thể tích hợp với Notification Service mà không cần đọc trực tiếp mã nguồn. Đồng thời, OpenAPI còn hỗ trợ sinh tài liệu API và phục vụ kiểm thử bằng Postman hoặc Swagger.
+
+\section{Phân tích các Endpoint}
+
+\subsection{Health Check API}
+
+Đây là API được sử dụng để kiểm tra trạng thái hoạt động của Notification Service.
+
+\begin{center}
+GET /health
+\end{center}
+
+API trả về trạng thái của ứng dụng, cơ sở dữ liệu PostgreSQL và Mock Channel Service.
+
+API này được Docker Compose sử dụng làm Health Check để xác định container đã sẵn sàng phục vụ hay chưa.
+
+\subsection{Notification API}
+
+Endpoint:
+
+\begin{center}
+POST /api/notifications/alerts
+\end{center}
+
+Đây là API quan trọng nhất của Notification Service.
+
+Sau khi nhận được Alert từ Core Business Service, hệ thống sẽ:
+
+\begin{enumerate}
+\item Xác thực Bearer Token.
+\item Kiểm tra dữ liệu đầu vào.
+\item Kiểm tra Alert ID.
+\item Thực hiện Retry nếu cần.
+\item Gửi Telegram.
+\item Lưu kết quả vào PostgreSQL.
+\item Trả Response về cho Core Business Service.
+\end{enumerate}
+
+\subsection{Logs API}
+
+Endpoint:
+
+\begin{center}
+GET /internal/notifications/logs
+\end{center}
+
+API này được Analytics Service sử dụng để lấy lịch sử gửi thông báo.
+
+Người dùng có thể truyền thêm các tham số như:
+
+\begin{itemize}
+\item limit
+\item status
+\item severity
+\item channel
+\end{itemize}
+
+để lọc dữ liệu thống kê.
+
+\subsection{Status API}
+
+Endpoint:
+
+\begin{center}
+GET /internal/notifications/\{alert\_id\}/status
+\end{center}
+
+API cho phép kiểm tra trạng thái của một Alert cụ thể.
+
+Nếu Alert tồn tại, hệ thống sẽ trả về đầy đủ thông tin xử lý như trạng thái, số lần Retry và chi tiết kết quả.
+
+\subsection{Retry API}
+
+Endpoint:
+
+\begin{center}
+POST /internal/notifications/\{alert\_id\}/retry
+\end{center}
+
+API này cho phép thực hiện gửi lại thông báo đối với các Alert chưa được gửi thành công.
+
+Sau khi Retry thành công, trạng thái trong cơ sở dữ liệu sẽ được cập nhật lại.
+
+\section{Phân tích các module trong source code}
+
+Source code của Notification Service được tổ chức theo cấu trúc đơn giản nhằm thuận tiện cho việc triển khai trong phạm vi bài tập lớn.
+
+Module chính của hệ thống là:
+
+\begin{center}
+\texttt{src/notify\_app/main.py}
+\end{center}
+
+Module này đảm nhiệm toàn bộ các chức năng:
+
+\begin{itemize}
+\item Khởi tạo FastAPI.
+\item Định nghĩa Request Model và Response Model.
+\item Khởi tạo PostgreSQL.
+\item Định nghĩa REST API.
+\item Authentication.
+\item Retry.
+\item Idempotency.
+\item Exception Handler.
+\item Health Check.
+\item Telegram Integration.
+\end{itemize}
+
+Bên cạnh đó, thư mục:
+
+\begin{center}
+\texttt{src/mock\_channel}
+\end{center}
+
+được sử dụng để mô phỏng dịch vụ gửi thông báo trong quá trình phát triển và kiểm thử. Mock Channel giúp kiểm tra Retry Mechanism và Health Check mà không cần phụ thuộc hoàn toàn vào Telegram Bot.
+
+\section{Sequence Diagram}
+
+Quá trình xử lý một Alert trong Notification Service được mô tả như Hình \ref{fig:sequence}.
+
+\begin{figure}[H]
+\centering
+\fbox{
+\begin{minipage}{0.92\textwidth}
+\centering
+
+Core Business
+
+$\downarrow$
+
+Notification API
+
+$\downarrow$
+
+Authentication
+
+$\downarrow$
+
+Validation
+
+$\downarrow$
+
+Idempotency
+
+$\downarrow$
+
+Retry
+
+$\downarrow$
+
+Telegram
+
+$\downarrow$
+
+PostgreSQL
+
+$\downarrow$
+
+Response
+
+\end{minipage}
+}
+\caption{Sequence xử lý Alert trong Notification Service}
+\label{fig:sequence}
+\end{figure}
+
+\section{Class Diagram}
+
+Notification Service sử dụng các lớp dữ liệu (Pydantic Model) để biểu diễn Request và Response.
+
+Các lớp chính bao gồm:
+
+\begin{itemize}
+\item AlertNotificationRequest
+\item NotificationResponse
+\item NotificationLog
+\item HealthResponse
+\end{itemize}
+
+Các Model này giúp kiểm tra dữ liệu đầu vào, chuẩn hóa Response và sinh tài liệu OpenAPI tự động.
+
+Nhờ sử dụng Pydantic, hệ thống giảm đáng kể lượng mã kiểm tra dữ liệu thủ công, đồng thời đảm bảo dữ liệu trao đổi giữa các service luôn đúng định dạng.
+```

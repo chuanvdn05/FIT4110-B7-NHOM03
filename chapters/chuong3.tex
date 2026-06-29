@@ -1,69 +1,229 @@
-\chapter{KẾT QUẢ THỰC TẬP}
+\chapter{TRIỂN KHAI, KIỂM THỬ VÀ ĐÁNH GIÁ HỆ THỐNG}
 
-\section{Tóm tắt nội dung đã thực hiện}
+```latex
+\section{Môi trường triển khai}
 
-Sinh viên tóm tắt toàn bộ các nội dung đã thực hiện trong quá trình thực tập, bao gồm các công việc chuyên môn, công việc hỗ trợ, các buổi họp, trao đổi nghiệp vụ hoặc các hoạt động khác tại doanh nghiệp.
+Để triển khai Notification Service, nhóm B7 sử dụng môi trường phát triển gồm Windows 11 kết hợp với Docker Desktop nhằm quản lý và vận hành các container của hệ thống. Việc sử dụng Docker giúp đảm bảo tính đồng nhất giữa môi trường phát triển và môi trường triển khai thực tế, đồng thời giảm thiểu các vấn đề liên quan đến cấu hình phần mềm.
 
-\section{Sản phẩm hoặc dự án thực tế đã tham gia}
-
-Sinh viên mô tả sản phẩm, module, chức năng hoặc dự án thực tế đã tham gia. Nội dung có thể bao gồm:
-
-\begin{itemize}
-    \item Tên dự án hoặc sản phẩm.
-    \item Mục tiêu của dự án.
-    \item Vai trò của sinh viên trong dự án.
-    \item Các chức năng hoặc nhiệm vụ đã thực hiện.
-    \item Công nghệ, ngôn ngữ lập trình, framework, cơ sở dữ liệu hoặc công cụ sử dụng.
-\end{itemize}
+Các công nghệ và công cụ được sử dụng trong quá trình phát triển được trình bày trong Bảng \ref{tab:environment}.
 
 \begin{table}[H]
 \centering
-\caption{Danh sách công nghệ sử dụng trong quá trình thực tập}
-\label{tab:cong-nghe-su-dung}
-\begin{tabular}{|c|p{4cm}|p{8cm}|}
+\caption{Môi trường phát triển}
+\label{tab:environment}
+\begin{tabular}{|l|l|}
 \hline
-\textbf{STT} & \textbf{Công nghệ/Công cụ} & \textbf{Mục đích sử dụng} \\
-\hline
-1 & Git/GitHub & Quản lý mã nguồn và phối hợp làm việc nhóm. \\
-\hline
-2 & Visual Studio Code & Soạn thảo mã nguồn. \\
-\hline
-3 & MySQL/\allowbreak PostgreSQL & Lưu trữ và quản lý dữ liệu. \\
-\hline
+Hệ điều hành & Windows 11 \\ \hline
+Ngôn ngữ lập trình & Python 3.11 \\ \hline
+Framework & FastAPI \\ \hline
+Cơ sở dữ liệu & PostgreSQL 15 \\ \hline
+Container & Docker Desktop \\ \hline
+Quản lý Container & Docker Compose \\ \hline
+Công cụ kiểm thử & PowerShell, Postman \\ \hline
+Kênh gửi thông báo & Telegram Bot API \\ \hline
+Quản lý mã nguồn & GitHub \\ \hline
 \end{tabular}
-\Nguon{Sinh viên tổng hợp}
 \end{table}
 
-\section{Kỹ năng đã rèn luyện được}
+Trong quá trình triển khai, Notification Service được cấu hình để giao tiếp với PostgreSQL và Mock Channel Service thông qua mạng nội bộ Docker. Đồng thời, Notification Service cũng kết nối với Telegram Bot API để gửi cảnh báo tới người dùng.
 
-\subsection{Kỹ năng chuyên môn}
+\section{Triển khai bằng Docker Compose}
 
-\begin{itemize}
-    \item Kỹ năng lập trình, kiểm thử hoặc phân tích hệ thống.
-    \item Kỹ năng sử dụng công cụ phát triển phần mềm.
-    \item Kỹ năng đọc hiểu tài liệu kỹ thuật.
-    \item Kỹ năng xử lý lỗi và tối ưu công việc.
-\end{itemize}
+Notification Service được triển khai bằng Docker Compose nhằm quản lý đồng thời nhiều container.
 
-\subsection{Kỹ năng mềm}
+Sau khi thực hiện lệnh:
 
-\begin{itemize}
-    \item Kỹ năng giao tiếp trong môi trường làm việc.
-    \item Kỹ năng làm việc nhóm.
-    \item Kỹ năng quản lý thời gian.
-    \item Tác phong làm việc chuyên nghiệp.
-\end{itemize}
+\begin{center}
+\texttt{docker compose up -d --build}
+\end{center}
 
-\section{Đề xuất cải thiện hoặc đóng góp ý kiến cho doanh nghiệp}
-
-Sinh viên nêu các đề xuất phù hợp nếu có, ví dụ:
+hệ thống tự động khởi tạo ba container gồm:
 
 \begin{itemize}
-    \item Đề xuất cải thiện quy trình hướng dẫn thực tập sinh.
-    \item Đề xuất cải thiện tài liệu kỹ thuật hoặc tài liệu bàn giao.
-    \item Đề xuất cải thiện công cụ, quy trình kiểm thử hoặc quy trình triển khai.
+\item Notification API
+\item PostgreSQL Database
+\item Mock Channel Service
 \end{itemize}
 
-\section{Tự đánh giá hiệu quả thực tập}
+Sau khi khởi động thành công, trạng thái các container được kiểm tra bằng lệnh:
 
-Sinh viên tự đánh giá mức độ hoàn thành công việc, những điểm mạnh, hạn chế và định hướng cải thiện sau quá trình thực tập.
+\begin{center}
+\texttt{docker compose ps}
+\end{center}
+
+Kết quả cho thấy toàn bộ container đều chuyển sang trạng thái Healthy, chứng tỏ Notification Service đã được triển khai thành công.
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering Chèn ảnh docker compose ps}}
+\caption{Kết quả triển khai Docker Compose}
+\label{fig:docker-ps}
+\end{figure}
+
+\section{Kiểm thử Health Check}
+
+Sau khi triển khai thành công, nhóm tiến hành kiểm tra trạng thái hoạt động của Notification Service thông qua endpoint:
+
+\begin{center}
+\texttt{GET /health}
+\end{center}
+
+API trả về thông tin về trạng thái của Notification Service, PostgreSQL và Mock Channel Service.
+
+Kết quả kiểm thử cho thấy cả ba thành phần đều hoạt động bình thường và sẵn sàng phục vụ các yêu cầu từ Core Business Service.
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering Chèn ảnh kết quả GET /health}}
+\caption{Kết quả Health Check}
+\label{fig:health}
+\end{figure}
+
+\section{Kiểm thử chức năng gửi thông báo}
+
+Để kiểm tra chức năng chính của Notification Service, nhóm sử dụng PowerShell gửi yêu cầu POST đến endpoint:
+
+\begin{center}
+\texttt{/api/notifications/alerts}
+\end{center}
+
+Request bao gồm các thông tin:
+
+\begin{itemize}
+\item Alert ID
+\item Severity
+\item Message
+\item Target
+\item Channel
+\end{itemize}
+
+Sau khi tiếp nhận yêu cầu, Notification Service thực hiện:
+
+\begin{enumerate}
+\item Xác thực Bearer Token.
+\item Validate dữ liệu đầu vào.
+\item Kiểm tra Alert ID.
+\item Gửi Telegram.
+\item Lưu lịch sử vào PostgreSQL.
+\item Trả Response về cho Client.
+\end{enumerate}
+
+Kết quả kiểm thử cho thấy Notification Service trả về trạng thái:
+
+\begin{center}
+Delivered
+\end{center}
+
+và Telegram Bot nhận được thông báo thành công.
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering Chèn ảnh PowerShell POST}}
+\caption{Kiểm thử API gửi thông báo}
+\label{fig:post-alert}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering Chèn ảnh Telegram}}
+\caption{Thông báo nhận được trên Telegram}
+\label{fig:telegram}
+\end{figure}
+
+\section{Kiểm thử API Logs}
+
+Sau khi gửi thành công thông báo, nhóm tiến hành kiểm tra lịch sử xử lý thông qua endpoint:
+
+\begin{center}
+\texttt{/internal/notifications/logs}
+\end{center}
+
+API trả về danh sách các thông báo đã xử lý bao gồm:
+
+\begin{itemize}
+\item Alert ID
+\item Severity
+\item Message
+\item Status
+\item Attempts
+\item Channel
+\item Detail
+\item Created Time
+\end{itemize}
+
+Kết quả cho thấy dữ liệu được lưu chính xác trong PostgreSQL và có thể truy xuất thông qua REST API.
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering Chèn ảnh Logs API}}
+\caption{Kết quả truy xuất lịch sử thông báo}
+\label{fig:logs}
+\end{figure}
+
+\section{Kiểm thử tích hợp giữa các nhóm}
+
+Một trong những yêu cầu quan trọng của bài tập lớn là khả năng tích hợp giữa các nhóm phát triển.
+
+Notification Service của nhóm B7 đã được tích hợp thành công với:
+
+\subsection{Tích hợp với Core Business Service (B6)}
+
+Core Business Service gửi Alert đến Notification Service thông qua REST API.
+
+Notification Service tiếp nhận yêu cầu, xử lý và trả kết quả thành công.
+
+Quá trình kiểm thử được thực hiện trên mạng LAN với địa chỉ IP của nhóm B7.
+
+\subsection{Tích hợp với Analytics Service (B5)}
+
+Analytics Service sử dụng API:
+
+\begin{center}
+\texttt{/internal/notifications/logs}
+\end{center}
+
+để truy xuất lịch sử gửi thông báo.
+
+Các dữ liệu này được sử dụng để xây dựng Dashboard thống kê và đánh giá hiệu quả hoạt động của hệ thống.
+
+\section{Đánh giá kết quả}
+
+Sau quá trình triển khai và kiểm thử, Notification Service đã hoàn thành đầy đủ các chức năng theo yêu cầu của bài tập lớn.
+
+Các chức năng đã hoàn thành bao gồm:
+
+\begin{itemize}
+\item Triển khai bằng Docker Compose.
+\item Health Check.
+\item Bearer Authentication.
+\item Validate Request.
+\item Retry Mechanism.
+\item Idempotency.
+\item Telegram Integration.
+\item PostgreSQL Logging.
+\item RESTful API.
+\item OpenAPI Contract.
+\item Tích hợp thành công với nhóm B6 và nhóm B5.
+\end{itemize}
+
+Kết quả kiểm thử thực tế cho thấy Notification Service hoạt động ổn định, thời gian phản hồi nhanh và đáp ứng đầy đủ yêu cầu của hệ thống Smart Campus.
+
+\section{Hạn chế và hướng phát triển}
+
+Mặc dù đã hoàn thành các yêu cầu của bài tập lớn, Notification Service vẫn còn một số hạn chế.
+
+Hiện tại hệ thống mới chỉ triển khai kênh Telegram. Các kênh gửi khác như Email, SMS hoặc Discord vẫn chưa được phát triển.
+
+Ngoài ra, hệ thống chưa xây dựng Dashboard quản trị trực quan để theo dõi trạng thái gửi thông báo theo thời gian thực.
+
+Trong tương lai, Notification Service có thể được mở rộng theo các hướng sau:
+
+\begin{itemize}
+\item Hỗ trợ nhiều kênh gửi thông báo.
+\item Xây dựng Dashboard quản trị.
+\item Triển khai Message Queue (RabbitMQ hoặc Kafka).
+\item Hỗ trợ WebSocket để cập nhật trạng thái thời gian thực.
+\item Bổ sung cơ chế phân quyền người dùng.
+\item Tăng cường khả năng giám sát bằng Prometheus và Grafana.
+\end{itemize}
+```

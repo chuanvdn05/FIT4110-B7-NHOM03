@@ -1,0 +1,215 @@
+\chapter{KẾT QUẢ THỰC NGHIỆM VÀ ĐÁNH GIÁ HỆ THỐNG}
+```latex
+\section{Giới thiệu chương}
+
+Sau khi hoàn thành quá trình phân tích, thiết kế và triển khai Notification Service, nhóm tiến hành kiểm thử toàn bộ hệ thống nhằm đánh giá khả năng hoạt động cũng như mức độ đáp ứng các yêu cầu của bài tập lớn. Việc kiểm thử được thực hiện trên môi trường Docker Compose với đầy đủ các thành phần của hệ thống, đồng thời tiến hành tích hợp thực tế với các nhóm khác trong lớp.
+
+Trong chương này, nhóm trình bày kết quả triển khai hệ thống, kết quả kiểm thử các chức năng chính, quá trình tích hợp với Core Business Service (B6) và Analytics Service (B5), đồng thời đánh giá mức độ hoàn thành của Notification Service so với yêu cầu ban đầu.
+
+\section{Kết quả triển khai hệ thống}
+
+Notification Service được triển khai thành công bằng Docker Compose với ba container chính gồm Notification API, PostgreSQL Database và Mock Channel Service. Sau khi thực hiện lệnh:
+
+\begin{center}
+\texttt{docker compose up -d --build}
+\end{center}
+
+toàn bộ các container đều được khởi động thành công và chuyển sang trạng thái Healthy.
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering Chèn ảnh Docker Compose PS}}
+\caption{Các container của Notification Service sau khi triển khai}
+\end{figure}
+
+Việc triển khai bằng Docker Compose giúp toàn bộ hệ thống có thể khởi động chỉ với một lệnh duy nhất, đồng thời đảm bảo các service luôn hoạt động trong cùng một môi trường cấu hình.
+
+\section{Kết quả kiểm thử chức năng}
+
+Sau khi hệ thống được triển khai thành công, nhóm tiến hành kiểm thử toàn bộ các chức năng chính của Notification Service.
+
+\subsection{Kiểm thử Health Check}
+
+Notification Service cung cấp endpoint:
+
+\begin{center}
+GET /health
+\end{center}
+
+để kiểm tra trạng thái hoạt động của hệ thống.
+
+Kết quả kiểm thử cho thấy:
+
+\begin{itemize}
+\item Notification API hoạt động bình thường.
+\item PostgreSQL kết nối thành công.
+\item Mock Channel Service hoạt động ổn định.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering Chèn ảnh GET /health}}
+\caption{Kết quả kiểm tra Health Check}
+\end{figure}
+
+\subsection{Kiểm thử gửi thông báo}
+
+Nhóm sử dụng PowerShell gửi yêu cầu POST tới Notification Service.
+
+Request bao gồm đầy đủ các thông tin:
+
+\begin{itemize}
+\item Alert ID
+\item Severity
+\item Message
+\item Target
+\item Channel
+\end{itemize}
+
+Notification Service tiếp nhận yêu cầu, xác thực Bearer Token, kiểm tra dữ liệu đầu vào, thực hiện Retry khi cần thiết và gửi thông báo đến Telegram.
+
+Kết quả trả về:
+
+\begin{itemize}
+\item sent = true
+\item status = delivered
+\item attempts = 1
+\end{itemize}
+
+cho thấy quá trình gửi thông báo thành công.
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering Chèn ảnh PowerShell POST}}
+\caption{Kết quả gửi yêu cầu Notification}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering Chèn ảnh Telegram}}
+\caption{Thông báo nhận được trên Telegram}
+\end{figure}
+
+\subsection{Kiểm thử Logs API}
+
+Sau khi gửi thông báo thành công, Notification Service lưu toàn bộ kết quả xử lý vào PostgreSQL.
+
+Nhóm tiến hành kiểm thử endpoint:
+
+\begin{center}
+GET /internal/notifications/logs
+\end{center}
+
+Kết quả trả về đầy đủ các trường:
+
+\begin{itemize}
+\item Alert ID
+\item Severity
+\item Channel
+\item Status
+\item Attempts
+\item Detail
+\item Created At
+\item Updated At
+\end{itemize}
+
+Điều này chứng minh Notification Service đã lưu thành công lịch sử xử lý và có thể cung cấp dữ liệu cho Analytics Service.
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering Chèn ảnh Logs API}}
+\caption{Kết quả truy xuất lịch sử thông báo}
+\end{figure}
+
+\section{Kết quả tích hợp giữa các nhóm}
+
+Một trong những yêu cầu quan trọng của học phần là khả năng tích hợp giữa các nhóm phát triển trong cùng hệ thống Smart Campus.
+
+\subsection{Tích hợp với nhóm B6}
+
+Notification Service đóng vai trò Consumer đối với Core Business Service.
+
+Trong quá trình kiểm thử, nhóm B6 gửi Alert đến Notification Service thông qua endpoint:
+
+\begin{center}
+POST /api/notifications/alerts
+\end{center}
+
+Notification Service tiếp nhận yêu cầu, xử lý thành công và gửi thông báo đến Telegram.
+
+Việc tích hợp giữa hai nhóm được thực hiện thành công trên mạng LAN thông qua địa chỉ IP nội bộ.
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.9\textwidth}{\centering Chèn ảnh B6 gửi Alert}}
+\caption{Quá trình tích hợp giữa B6 và B7}
+\end{figure}
+
+\subsection{Tích hợp với nhóm B5}
+
+Notification Service đồng thời đóng vai trò Provider đối với Analytics Service.
+
+Nhóm B5 sử dụng endpoint:
+
+\begin{center}
+GET /internal/notifications/logs
+\end{center}
+
+để lấy lịch sử gửi thông báo phục vụ thống kê và xây dựng Dashboard.
+
+Kết quả kiểm thử cho thấy dữ liệu được trả về đầy đủ, chính xác và đáp ứng yêu cầu tích hợp giữa hai nhóm.
+
+\section{Đánh giá kết quả thực hiện}
+
+Sau quá trình triển khai và kiểm thử, Notification Service đã hoàn thành đầy đủ các chức năng theo yêu cầu của bài tập lớn.
+
+Bảng dưới đây tổng hợp kết quả đạt được.
+
+\begin{table}[H]
+\centering
+\caption{Kết quả đánh giá hệ thống}
+\begin{tabular}{|p{8cm}|c|}
+\hline
+Chức năng & Kết quả \\ \hline
+Triển khai Docker Compose & Đạt \\ \hline
+Health Check & Đạt \\ \hline
+REST API & Đạt \\ \hline
+Authentication & Đạt \\ \hline
+Validate Request & Đạt \\ \hline
+Retry Mechanism & Đạt \\ \hline
+Idempotency & Đạt \\ \hline
+Telegram Notification & Đạt \\ \hline
+PostgreSQL Logging & Đạt \\ \hline
+OpenAPI Contract & Đạt \\ \hline
+Tích hợp với B6 & Đạt \\ \hline
+Tích hợp với B5 & Đạt \\ \hline
+\end{tabular}
+\end{table}
+
+Kết quả kiểm thử thực tế cho thấy Notification Service hoạt động ổn định, thời gian phản hồi nhanh và đáp ứng đầy đủ các yêu cầu của đề tài.
+
+\section{Hạn chế}
+
+Bên cạnh các kết quả đạt được, Notification Service vẫn còn một số hạn chế.
+
+Hiện tại hệ thống mới chỉ triển khai kênh Telegram. Các kênh Email, SMS và Discord mới dừng ở mức thiết kế và chưa được hiện thực hóa.
+
+Ngoài ra hệ thống chưa triển khai Dashboard quản trị trực quan và chưa tích hợp Message Queue để xử lý các thông báo với số lượng lớn.
+
+\section{Hướng phát triển}
+
+Trong tương lai, Notification Service có thể được mở rộng theo các hướng sau:
+
+\begin{itemize}
+\item Hỗ trợ nhiều kênh gửi thông báo như Email, SMS và Discord.
+\item Tích hợp RabbitMQ hoặc Apache Kafka để xử lý bất đồng bộ.
+\item Xây dựng Dashboard quản trị theo thời gian thực.
+\item Tích hợp Prometheus và Grafana để giám sát hệ thống.
+\item Áp dụng JWT Authentication thay cho Bearer Token tĩnh.
+\item Triển khai trên Kubernetes để tăng khả năng mở rộng.
+\end{itemize}
+
+\section{Kết luận chương}
+
+Thông qua quá trình triển khai, kiểm thử và tích hợp thực tế, Notification Service đã chứng minh khả năng hoạt động ổn định trong kiến trúc Microservices của hệ thống Smart Campus. Service không chỉ đáp ứng đầy đủ các yêu cầu của bài tập lớn mà còn tích hợp thành công với Core Business Service và Analytics Service, góp phần hoàn thiện quy trình xử lý cảnh báo của toàn bộ hệ thống.
+```

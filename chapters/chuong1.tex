@@ -1,59 +1,232 @@
-\chapter{TÌM HIỂU DOANH NGHIỆP}
+\chapter{TỔNG QUAN HỆ THỐNG SMART CAMPUS VÀ PHÂN TÍCH SERVICE BOUNDARY}
 
-\section{Giới thiệu tổng quan}
+\section{Giới thiệu hệ thống Smart Campus}
 
-Sinh viên trình bày các nội dung sau:
+Smart Campus Operations Platform là một nền tảng được xây dựng theo kiến trúc Microservices nhằm phục vụ cho việc quản lý, giám sát và vận hành các hoạt động trong khuôn viên trường học một cách thông minh. Hệ thống được chia thành nhiều dịch vụ (service) độc lập, mỗi service đảm nhiệm một chức năng riêng biệt và giao tiếp với nhau thông qua REST API hoặc các cơ chế tích hợp khác.
 
-\begin{itemize}
-    \item Lịch sử hình thành và phát triển của doanh nghiệp.
-    \item Tầm nhìn, sứ mệnh và giá trị cốt lõi.
-    \item Lĩnh vực hoạt động chính của doanh nghiệp.
-    \item Các sản phẩm, dịch vụ hoặc giải pháp công nghệ nổi bật.
-\end{itemize}
+Mô hình Microservices giúp hệ thống dễ dàng mở rộng, triển khai độc lập, bảo trì thuận tiện và giảm sự phụ thuộc giữa các thành phần. Khi một service được nâng cấp hoặc thay đổi thì các service còn lại vẫn có thể hoạt động bình thường nếu hợp đồng API (API Contract) được đảm bảo.
 
-Ví dụ trình bày logo của đơn vị:
+Trong bài tập lớn học phần Dịch vụ kết nối và Công nghệ nền tảng, hệ thống Smart Campus được chia thành nhiều nhóm phát triển, mỗi nhóm phụ trách một service riêng. Các service phối hợp với nhau để hình thành một quy trình xử lý hoàn chỉnh từ việc tiếp nhận dữ liệu, xử lý nghiệp vụ, gửi cảnh báo cho đến thống kê và phân tích dữ liệu.
+
+\section{Kiến trúc tổng thể của hệ thống}
+
+Kiến trúc tổng thể của Smart Campus được thiết kế theo mô hình phân tầng gồm nhiều service độc lập. Dữ liệu được thu thập từ các nguồn như cảm biến IoT, camera hoặc các hệ thống nghiệp vụ khác. Sau khi tiếp nhận dữ liệu, Core Business Service thực hiện phân tích, đánh giá các điều kiện nghiệp vụ và tạo ra các Alert nếu phát hiện sự kiện bất thường.
+
+Các Alert sau đó được gửi đến Notification Service để thực hiện việc thông báo tới người dùng thông qua các kênh như Telegram. Đồng thời Notification Service lưu toàn bộ lịch sử gửi thông báo và cung cấp dữ liệu cho Analytics Service nhằm phục vụ việc thống kê và đánh giá.
+
+Kiến trúc này giúp tách biệt rõ giữa phần xử lý nghiệp vụ và phần gửi thông báo, đảm bảo mỗi service chỉ thực hiện đúng một nhiệm vụ, phù hợp với nguyên tắc Single Responsibility trong thiết kế hệ thống phân tán.
 
 \begin{figure}[H]
-    \centering
-    % Thay logo minh họa dưới đây bằng logo của doanh nghiệp thực tập.
-    \includegraphics[width=0.25\textwidth]{images/logo-dai-nam.png}
-    \caption{Logo đơn vị (hình minh họa)}
-    \label{fig:logo-don-vi}
-    \Nguon{Trường Đại học Đại Nam}
+\centering
+\includegraphics[width=0.9\textwidth]{images/system-architecture.png}
+\caption{Kiến trúc tổng thể hệ thống Smart Campus}
 \end{figure}
 
-\section{Cơ cấu tổ chức}
+\section{Giới thiệu Notification Service}
+Notification Service là dịch vụ do nhóm B7 phát triển, có nhiệm vụ tiếp nhận các cảnh báo (Alert) từ Core Business Service và gửi thông báo đến người dùng thông qua các kênh truyền thông. Trong phạm vi đồ án, kênh được triển khai là Telegram Bot.
 
-Sinh viên trình bày sơ đồ tổ chức của doanh nghiệp hoặc mô tả cơ cấu tổ chức bằng văn bản.
+Ngoài việc gửi thông báo, Notification Service còn chịu trách nhiệm lưu lại toàn bộ lịch sử gửi thông báo vào cơ sở dữ liệu PostgreSQL, hỗ trợ kiểm tra trạng thái gửi, chống gửi trùng (Idempotency), thực hiện Retry khi xảy ra lỗi và cung cấp API cho Analytics Service truy xuất dữ liệu thống kê.
+
+Notification Service không tham gia vào quá trình phân tích dữ liệu cảm biến hoặc phát hiện sự kiện. Toàn bộ quyết định nghiệp vụ được thực hiện tại Core Business Service trước khi gửi Alert sang Notification Service.
+
+\section{Vai trò của nhóm B7}
+
+Trong kiến trúc Smart Campus, nhóm B7 đảm nhận việc phát triển Notification Service.
+
+Service của nhóm đóng vai trò là Consumer đối với Core Business Service (B6) và là Provider đối với Analytics Service (B5).
+
+Đối với Core Business Service, Notification Service tiếp nhận các Alert thông qua REST API để thực hiện gửi thông báo.
+
+Đối với Analytics Service, Notification Service cung cấp API truy xuất lịch sử gửi thông báo nhằm phục vụ thống kê, báo cáo và đánh giá hiệu quả hoạt động của hệ thống.
+
+Nhờ đó Notification Service đóng vai trò là cầu nối giữa tầng xử lý nghiệp vụ và tầng phân tích dữ liệu trong toàn bộ hệ thống Smart Campus.
+
+```latex
+\section{Mục tiêu của Notification Service}
+
+Notification Service được xây dựng với mục tiêu trở thành một thành phần trung gian chịu trách nhiệm tiếp nhận và gửi các cảnh báo phát sinh trong hệ thống Smart Campus. Service này không thực hiện việc phân tích dữ liệu hay xử lý nghiệp vụ mà chỉ tập trung vào việc truyền tải thông tin cảnh báo đến người dùng một cách nhanh chóng, chính xác và tin cậy.
+
+Mục tiêu đầu tiên của Notification Service là đảm bảo việc gửi thông báo được thực hiện theo thời gian thực. Khi Core Business Service phát hiện một sự kiện bất thường như nhiệt độ vượt ngưỡng, truy cập trái phép hoặc phát hiện đối tượng lạ, thông tin cảnh báo sẽ được chuyển ngay đến Notification Service để gửi tới người quản trị thông qua Telegram Bot. Điều này giúp người quản trị có thể tiếp cận thông tin trong thời gian ngắn nhất và đưa ra các biện pháp xử lý kịp thời.
+
+Bên cạnh đó, Notification Service được thiết kế nhằm tăng độ tin cậy của hệ thống thông qua cơ chế Retry. Trong trường hợp việc gửi thông báo gặp lỗi do mất kết nối mạng hoặc dịch vụ Telegram không phản hồi, hệ thống sẽ tự động thực hiện gửi lại nhiều lần trước khi xác định việc gửi thất bại. Cơ chế này góp phần giảm thiểu nguy cơ bỏ sót các cảnh báo quan trọng.
+
+Một mục tiêu quan trọng khác là đảm bảo tính nhất quán của dữ liệu thông qua cơ chế Idempotency. Notification Service sẽ kiểm tra Alert ID trước khi gửi nhằm tránh trường hợp cùng một cảnh báo được gửi nhiều lần tới người dùng. Việc chống gửi trùng giúp hạn chế tình trạng xuất hiện các thông báo lặp lại gây ảnh hưởng đến trải nghiệm sử dụng hệ thống.
+
+Ngoài chức năng gửi thông báo, Notification Service còn lưu toàn bộ lịch sử xử lý vào cơ sở dữ liệu PostgreSQL. Các thông tin như Alert ID, mức độ cảnh báo, trạng thái gửi, số lần Retry, thời gian gửi và kết quả xử lý đều được ghi nhận để phục vụ công tác tra cứu, thống kê và đánh giá hiệu quả hoạt động của hệ thống.
+
+Cuối cùng, Notification Service cung cấp các API nội bộ để Analytics Service có thể truy xuất lịch sử gửi thông báo. Đây là cơ sở để xây dựng các báo cáo thống kê, dashboard giám sát và đánh giá chất lượng hoạt động của toàn bộ hệ thống Smart Campus.
+
+
+\section{Phạm vi chức năng}
+
+Trong phạm vi của đồ án học phần Dịch vụ kết nối và Công nghệ nền tảng, Notification Service được triển khai với các chức năng chính liên quan đến việc tiếp nhận, xử lý và gửi cảnh báo.
+
+Đầu tiên, hệ thống tiếp nhận dữ liệu cảnh báo từ Core Business Service thông qua REST API. Mỗi yêu cầu gửi đến đều phải được xác thực bằng Bearer Token nhằm đảm bảo chỉ các service hợp lệ mới có quyền sử dụng Notification Service.
+
+Sau khi tiếp nhận yêu cầu, Notification Service tiến hành kiểm tra tính hợp lệ của dữ liệu đầu vào. Các trường thông tin như Alert ID, Severity, Message, Target và Channel đều được kiểm tra dựa trên các quy tắc đã định nghĩa bằng thư viện Pydantic. Nếu dữ liệu không hợp lệ, hệ thống sẽ trả về mã lỗi tương ứng để phía gọi API có thể xử lý.
+
+Đối với các cảnh báo hợp lệ, Notification Service sẽ kiểm tra Alert ID đã từng được xử lý hay chưa. Nếu Alert đã được gửi thành công trước đó thì hệ thống sẽ từ chối gửi lại nhằm đảm bảo không xảy ra hiện tượng gửi trùng.
+
+Sau khi hoàn thành bước kiểm tra, Notification Service thực hiện gửi thông báo thông qua Telegram Bot API. Trong trường hợp quá trình gửi thất bại, hệ thống sẽ tự động Retry theo số lần đã được cấu hình trước.
+
+Toàn bộ quá trình xử lý đều được ghi nhận vào cơ sở dữ liệu PostgreSQL. Thông tin lưu trữ bao gồm mã cảnh báo, nội dung cảnh báo, mức độ nghiêm trọng, trạng thái gửi, số lần Retry, chi tiết kết quả xử lý và thời gian cập nhật.
+
+Bên cạnh việc tiếp nhận yêu cầu gửi thông báo, Notification Service còn cung cấp các API phục vụ việc truy vấn lịch sử gửi thông báo, kiểm tra trạng thái của một Alert cụ thể và thực hiện gửi lại đối với các cảnh báo chưa thành công.
+
+Trong phạm vi của đồ án, Notification Service chỉ triển khai kênh Telegram. Các kênh khác như Email, SMS hoặc Discord mới chỉ được thiết kế ở mức mở rộng và chưa được triển khai thực tế.
+
+
+\section{Input và Output của Notification Service}
+
+Notification Service giao tiếp với các service khác thông qua giao thức REST API sử dụng định dạng dữ liệu JSON. Dữ liệu đầu vào của hệ thống là các Alert được gửi từ Core Business Service sau khi đã hoàn thành quá trình xử lý nghiệp vụ.
+
+Một yêu cầu gửi thông báo bao gồm các trường thông tin cơ bản như mã cảnh báo (Alert ID), mức độ nghiêm trọng (Severity), nội dung cảnh báo (Message), đối tượng nhận thông báo (Target) và kênh gửi thông báo (Channel).
+
+Ví dụ về dữ liệu đầu vào của Notification Service như sau:
+
+\begin{verbatim}
+{
+  "alert_id": "ALT-20260617-001",
+  "severity": "high",
+  "message": "Temperature exceeded threshold",
+  "target": "security_team",
+  "channel": "telegram"
+}
+\end{verbatim}
+
+Sau khi hoàn thành quá trình xử lý, Notification Service sẽ trả về một đối tượng JSON mô tả kết quả gửi thông báo. Các thông tin trả về bao gồm mã cảnh báo, trạng thái gửi, số lần Retry và mô tả kết quả xử lý.
+
+Ví dụ kết quả trả về:
+
+\begin{verbatim}
+{
+  "alert_id": "ALT-20260617-001",
+  "sent": true,
+  "channel": "telegram",
+  "status": "delivered",
+  "attempts": 1,
+  "detail": "telegram delivered"
+}
+\end{verbatim}
+
+Ngoài việc trả về phản hồi cho Core Business Service, Notification Service còn thực hiện hai tác vụ quan trọng khác. Thứ nhất là gửi nội dung cảnh báo đến Telegram Bot để người quản trị nhận được thông báo theo thời gian thực. Thứ hai là lưu toàn bộ thông tin xử lý vào cơ sở dữ liệu PostgreSQL nhằm phục vụ việc thống kê, tra cứu và phân tích sau này.
+
+Nhờ cách thiết kế này, Notification Service vừa đóng vai trò là một Consumer đối với Core Business Service, vừa đóng vai trò là một Provider đối với Analytics Service trong kiến trúc tổng thể của hệ thống Smart Campus.
+```
+```latex
+\section{Mối quan hệ giữa Notification Service và các Service khác}
+
+Trong kiến trúc Microservices của hệ thống Smart Campus, Notification Service không hoạt động độc lập mà có mối quan hệ chặt chẽ với các service khác thông qua các API được định nghĩa trước. Việc phân chia rõ ràng vai trò giữa các service giúp giảm sự phụ thuộc lẫn nhau, tăng khả năng mở rộng và đảm bảo mỗi service chỉ thực hiện đúng một chức năng.
+
+Notification Service vừa đóng vai trò là một Consumer đối với Core Business Service, vừa đóng vai trò là một Provider đối với Analytics Service. Luồng xử lý dữ liệu được thực hiện theo chiều từ Core Business Service đến Notification Service và sau đó đến Analytics Service.
+
+\subsection{Notification Service là Consumer của Core Business Service}
+
+Core Business Service (B6) là nơi tiếp nhận dữ liệu từ các nguồn như hệ thống IoT, Camera AI, Access Control hoặc các hệ thống nghiệp vụ khác. Sau khi thực hiện các bước xử lý nghiệp vụ và xác định xuất hiện một sự kiện bất thường, Core Business Service sẽ tạo ra một Alert.
+
+Alert này sẽ được gửi đến Notification Service thông qua REST API với endpoint:
+
+\begin{center}
+POST /api/notifications/alerts
+\end{center}
+
+Notification Service tiếp nhận yêu cầu, kiểm tra tính hợp lệ của dữ liệu, xác thực Bearer Token và thực hiện quá trình gửi thông báo.
+
+Trong quá trình thực hiện đồ án, nhóm B6 và nhóm B7 đã tiến hành tích hợp trực tiếp thông qua mạng LAN. Các yêu cầu gửi từ B6 đều được Notification Service tiếp nhận và xử lý thành công, đồng thời gửi thông báo đến Telegram Bot.
+
+\subsection{Notification Service là Provider của Analytics Service}
+
+Sau khi Notification Service hoàn thành việc gửi thông báo, toàn bộ kết quả xử lý sẽ được lưu lại trong cơ sở dữ liệu PostgreSQL.
+
+Analytics Service (B5) không trực tiếp gửi thông báo mà chỉ thực hiện việc thu thập dữ liệu thống kê từ Notification Service.
+
+Notification Service cung cấp API:
+
+\begin{center}
+GET /internal/notifications/logs
+\end{center}
+
+Thông qua API này, Analytics Service có thể truy xuất danh sách các thông báo đã xử lý bao gồm:
 
 \begin{itemize}
-    \item Các phòng ban chính trong doanh nghiệp.
-    \item Chức năng, nhiệm vụ của từng phòng ban.
-    \item Quy mô nhân sự.
-    \item Các công nghệ, nền tảng hoặc dịch vụ doanh nghiệp đang sử dụng.
+\item Alert ID
+\item Severity
+\item Message
+\item Target
+\item Channel
+\item Status
+\item Attempts
+\item Detail
+\item Created Time
+\item Updated Time
 \end{itemize}
 
-Ví dụ chèn hình:
+Những dữ liệu này là cơ sở để Analytics Service xây dựng Dashboard thống kê, báo cáo số lượng thông báo, tỷ lệ gửi thành công và đánh giá hiệu quả hoạt động của hệ thống.
 
-\begin{sodo}[H]
-    \centering
-    % Thay thế bằng hình thật nếu có:
-    % \includegraphics[width=0.8\textwidth]{images/so-do-to-chuc.png}
 
-    \fbox{\parbox[c][5cm][c]{0.8\textwidth}{\centering Chèn sơ đồ tổ chức tại đây}}
+\section{Service Boundary}
 
-    \SodoCaption{Tổ chức doanh nghiệp}{Sinh viên tự xây dựng}
-    \label{fig:so-do-to-chuc}
-\end{sodo}
+Trong mô hình Microservices, Service Boundary được hiểu là ranh giới chức năng của từng dịch vụ. Mỗi service chỉ chịu trách nhiệm giải quyết một bài toán cụ thể và không can thiệp vào nghiệp vụ của service khác.
 
-\section{Phòng ban thực tập và vị trí công việc}
+Đối với Notification Service, phạm vi xử lý chỉ bao gồm việc tiếp nhận Alert, gửi thông báo và lưu lịch sử gửi thông báo.
 
-Sinh viên trình bày các nội dung sau:
+Các công việc như phân tích dữ liệu, phát hiện bất thường, xử lý hình ảnh AI hoặc đưa ra quyết định nghiệp vụ hoàn toàn không thuộc phạm vi xử lý của Notification Service.
+
+Việc phân chia rõ ràng Service Boundary giúp hệ thống đạt được nhiều lợi ích như:
 
 \begin{itemize}
-    \item Tên phòng ban tiếp nhận sinh viên thực tập.
-    \item Vị trí thực tập: Intern Developer, Tester, IT Support, Data Analyst, Business Analyst, v.v.
-    \item Người hướng dẫn tại doanh nghiệp nếu có.
-    \item Các nhiệm vụ chính được giao trong quá trình thực tập.
-    \item Môi trường làm việc, công cụ và quy trình làm việc của phòng ban.
+\item Dễ dàng mở rộng từng service độc lập.
+\item Giảm sự phụ thuộc giữa các nhóm phát triển.
+\item Cho phép triển khai và cập nhật từng service riêng biệt.
+\item Giảm ảnh hưởng khi một service xảy ra lỗi.
+\item Tăng khả năng tái sử dụng API giữa các service.
 \end{itemize}
+
+Trong đồ án này, Service Boundary của Notification Service được thể hiện như Hình \ref{fig:service-boundary}.
+
+\begin{figure}[H]
+\centering
+\fbox{
+\begin{minipage}{0.9\textwidth}
+\centering
+
+IoT / Camera / Access Control
+
+$\downarrow$
+
+Core Business Service (B6)
+
+$\downarrow$
+
+Notification Service (B7)
+
+$\swarrow \qquad \searrow$
+
+Telegram \hspace{2cm} PostgreSQL
+
+$\downarrow$
+
+Analytics Service (B5)
+
+\end{minipage}
+}
+\caption{Service Boundary của Notification Service}
+\label{fig:service-boundary}
+\end{figure}
+
+Hình trên thể hiện Notification Service đóng vai trò là cầu nối giữa tầng xử lý nghiệp vụ và tầng thống kê dữ liệu. Sau khi nhận Alert từ Core Business Service, Notification Service thực hiện gửi thông báo đến Telegram, đồng thời ghi nhận lịch sử xử lý để Analytics Service có thể khai thác phục vụ việc thống kê và giám sát.
+
+
+\section{Kết luận chương}
+
+Chương 1 đã trình bày tổng quan về hệ thống Smart Campus cũng như vai trò của Notification Service trong kiến trúc Microservices.
+
+Bên cạnh việc giới thiệu mục tiêu, phạm vi chức năng và luồng xử lý của Notification Service, chương này cũng phân tích mối quan hệ giữa Notification Service với các service khác trong hệ thống, đặc biệt là Core Business Service (B6) và Analytics Service (B5).
+
+Ngoài ra, chương cũng làm rõ Service Boundary nhằm xác định phạm vi trách nhiệm của Notification Service, giúp hệ thống đảm bảo tính độc lập giữa các service và thuận lợi trong việc mở rộng sau này.
+
+Những nội dung được trình bày trong chương này là cơ sở để xây dựng các phần phân tích, thiết kế, triển khai và kiểm thử hệ thống được trình bày trong Chương 2 và Chương 3 của báo cáo.
+```
+
+
+
