@@ -1,91 +1,247 @@
-# Template LaTeX Báo cáo Thực tập Tốt nghiệp
+```markdown
+# FIT4110 – B7 Notification Service
 
-Template này được tách theo cấu trúc nhiều file để sinh viên dễ viết báo cáo.
+Notification Service được phát triển trong khuôn khổ học phần **Dịch vụ kết nối và Công nghệ nền tảng (FIT4110)** – Trường Đại học Đại Nam.
 
-## Cấu trúc thư mục
+Dự án là một thành phần của hệ thống **Smart Campus Operations Platform**, có nhiệm vụ tiếp nhận các cảnh báo từ Core Business Service (B6), gửi thông báo đến người dùng thông qua Telegram Bot API, lưu trữ lịch sử xử lý vào PostgreSQL và cung cấp dữ liệu cho Analytics Service (B5).
 
-```text
-BaoCaoTTTN_LaTeX/
-├── main.tex
-├── settings.tex
-├── cover.tex
-├── images/
-│   └── logo-dai-nam.png
-├── frontmatter/
-│   ├── loi_cam_doan.tex
-│   ├── loi_cam_on.tex
-│   ├── danh_muc_viet_tat.tex
-│   └── mo_dau.tex
-├── chapters/
-│   ├── chuong1.tex
-│   ├── chuong2.tex
-│   └── chuong3.tex
-└── backmatter/
-    ├── ket_luan.tex
-    ├── tai_lieu_tham_khao.tex
-    └── phu_luc.tex
+---
+
+# Kiến trúc hệ thống
+
 ```
 
-## Cách dùng
+B6 Core Business
+│
+▼
+Notification Service (B7)
+│
+├────────► Telegram Bot
+│
+▼
+PostgreSQL
+│
+▼
+B5 Analytics
 
-1. Mở file `settings.tex` và sửa thông tin sinh viên/báo cáo:
-
-```latex
-\newcommand{\TenSinhVien}{NGUYỄN QUYẾT A}
-\newcommand{\MaSinhVien}{...}
-\newcommand{\KhoaHoc}{...}
-\newcommand{\TenBaoCao}{TÊN BÁO CÁO}
-\newcommand{\ChuyenNganh}{...}
-\newcommand{\GiangVienHD}{ThS. Lê Tuấn Anh}
 ```
 
-2. Viết nội dung báo cáo trong các file:
+---
 
-```text
-frontmatter/mo_dau.tex
-chapters/chuong1.tex
-chapters/chuong2.tex
-chapters/chuong3.tex
-backmatter/ket_luan.tex
-backmatter/tai_lieu_tham_khao.tex
-backmatter/phu_luc.tex
+# Chức năng chính
+
+- Tiếp nhận Alert từ Core Business Service (B6).
+- Xác thực Bearer Token.
+- Kiểm tra dữ liệu đầu vào.
+- Chống gửi trùng (Idempotency).
+- Retry khi gửi thất bại.
+- Gửi thông báo qua Telegram Bot API.
+- Lưu lịch sử gửi thông báo vào PostgreSQL.
+- Cung cấp Logs API cho Analytics Service (B5).
+
+---
+
+# Công nghệ sử dụng
+
+- Python 3.11
+- FastAPI
+- PostgreSQL
+- Docker
+- Docker Compose
+- OpenAPI Specification
+- Telegram Bot API
+- Postman
+
+---
+
+# Cấu trúc dự án
+
 ```
 
-3. Biên dịch file `main.tex` bằng **XeLaTeX**. Nên chạy 2 lần để cập nhật mục lục, danh mục bảng và danh mục hình.
+FIT4110-B7-NHOM03/
+│
+├── contracts/
+│   └── team-notify.openapi.yaml
+│
+├── postman/
+│   ├── collections/
+│   └── environments/
+│
+├── reports/
+│
+├── src/
+│   ├── mock_channel/
+│   │   └── main.py
+│   │
+│   └── notify_app/
+│       ├── **init**.py
+│       └── main.py
+│
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+├── README.md
+└── RUN_COMPOSE.md
 
-## Lệnh biên dịch gợi ý
+```
+
+---
+
+# REST API
+
+## Health Check
+
+```
+
+GET /health
+
+```
+
+---
+
+## Receive Notification
+
+```
+
+POST /api/notifications/alerts
+
+````
+
+### Request
+
+```json
+{
+  "alert_id": "ALT-20260617-001",
+  "severity": "high",
+  "message": "Temperature exceeded threshold",
+  "target": "security_team",
+  "channel": "telegram"
+}
+````
+
+### Response
+
+```json
+{
+  "alert_id": "ALT-20260617-001",
+  "sent": true,
+  "channel": "telegram",
+  "status": "delivered",
+  "attempts": 1,
+  "detail": "telegram delivered"
+}
+```
+
+---
+
+## Logs API
+
+```
+GET /internal/notifications/logs
+```
+
+---
+
+## Notification Status
+
+```
+GET /internal/notifications/{alert_id}/status
+```
+
+---
+
+# Triển khai
+
+## Clone project
 
 ```bash
-xelatex main.tex
-xelatex main.tex
+git clone https://github.com/FIT-17-09/fit4110-lab5-nhom03.git
+cd fit4110-b7-nhom03
 ```
 
-Hoặc dùng `latexmk`:
+---
+
+## Khởi động
 
 ```bash
-latexmk -xelatex main.tex
+docker compose up -d --build
 ```
 
-## Lưu ý
+---
 
-- Báo cáo thực tập phải có tối thiểu 15 trang nội dung, không tính hình vẽ,
-  bảng biểu, danh mục tài liệu tham khảo và phụ lục.
-- Không nên sửa `main.tex`, `settings.tex`, `cover.tex` nếu không cần thiết.
-- Hình ảnh nên đặt trong thư mục `images/`.
-- Khi chèn hình, dùng cú pháp:
+## Kiểm tra
 
-```latex
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{images/ten-hinh.png}
-    \caption{Tên hình}
-    \label{fig:ten-hinh}
-\end{figure}
+```bash
+docker compose ps
 ```
 
-- Khi chèn bảng, nhớ dùng `\caption{...}` để bảng xuất hiện trong danh mục bảng biểu.
-- Bảng, hình hoặc sơ đồ lấy từ nguồn khác phải ghi nguồn bằng
-  `\Nguon{Tên nguồn}` ngay bên dưới đối tượng.
-- Để tên mục cấp 1 trong mục lục hiển thị bằng chữ in hoa nhưng tiêu đề
-  trong nội dung vẫn viết bình thường, dùng
-  `\section[TÊN MỤC IN HOA]{Tên mục viết bình thường}`.
+---
+
+## Health
+
+```
+http://localhost:8000/health
+```
+
+---
+
+# Tích hợp hệ thống
+
+Notification Service đóng vai trò:
+
+### Consumer
+
+Nhận Alert từ:
+
+* B6 – Core Business Service
+
+### Provider
+
+Cung cấp Logs API cho:
+
+* B5 – Analytics Service
+
+---
+
+# Minh chứng
+
+Dự án đã được kiểm thử thành công với:
+
+* Docker Compose
+* Health Check
+* Telegram Notification
+* PostgreSQL Logging
+* Retry Mechanism
+* Idempotency
+* OpenAPI Contract
+* Tích hợp B6
+* Tích hợp B5
+
+---
+
+# Thành viên nhóm B7
+
+* Nguyễn Xuân Anh
+* Vũ Đức Nguyễn Chuẩn
+* Tăng Tất Cương
+
+---
+
+# Giảng viên hướng dẫn
+
+**ThS. Lê Thị Thùy Trang**
+
+---
+
+# Học phần
+
+FIT4110 – Dịch vụ kết nối và Công nghệ nền tảng
+
+Khoa Công nghệ Thông tin
+
+Trường Đại học Đại Nam
+
+2026
+
+```
+```
