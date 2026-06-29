@@ -41,7 +41,6 @@ Service của nhóm đóng vai trò là Consumer đối với Core Business Serv
 
 Nhờ đó Notification Service đóng vai trò là cầu nối giữa tầng xử lý nghiệp vụ và tầng phân tích dữ liệu trong toàn bộ hệ thống Smart Campus.
 
-```latex
 \section{Mục tiêu của Notification Service}
 
 Notification Service được xây dựng với mục tiêu trở thành một thành phần trung gian chịu trách nhiệm tiếp nhận và gửi các cảnh báo phát sinh trong hệ thống Smart Campus. Service này không thực hiện việc phân tích dữ liệu hay xử lý nghiệp vụ mà chỉ tập trung vào việc truyền tải thông tin cảnh báo đến người dùng một cách nhanh chóng, chính xác và tin cậy.
@@ -112,8 +111,7 @@ Ví dụ kết quả trả về:
 Ngoài việc trả về phản hồi cho Core Business Service, Notification Service còn thực hiện hai tác vụ quan trọng khác. Thứ nhất là gửi nội dung cảnh báo đến Telegram Bot để người quản trị nhận được thông báo theo thời gian thực. Thứ hai là lưu toàn bộ thông tin xử lý vào cơ sở dữ liệu PostgreSQL nhằm phục vụ việc thống kê, tra cứu và phân tích sau này.
 
 Nhờ cách thiết kế này, Notification Service vừa đóng vai trò là một Consumer đối với Core Business Service, vừa đóng vai trò là một Provider đối với Analytics Service trong kiến trúc tổng thể của hệ thống Smart Campus.
-```
-```latex
+
 \section{Mối quan hệ giữa Notification Service và các Service khác}
 
 Trong kiến trúc Microservices của hệ thống Smart Campus, Notification Service không hoạt động độc lập mà có mối quan hệ chặt chẽ với các service khác thông qua các API được định nghĩa trước. Việc phân chia rõ ràng vai trò giữa các service giúp giảm sự phụ thuộc lẫn nhau, tăng khả năng mở rộng và đảm bảo mỗi service chỉ thực hiện đúng một chức năng.
@@ -226,7 +224,6 @@ Bên cạnh việc giới thiệu mục tiêu, phạm vi chức năng và luồn
 Ngoài ra, chương cũng làm rõ Service Boundary nhằm xác định phạm vi trách nhiệm của Notification Service, giúp hệ thống đảm bảo tính độc lập giữa các service và thuận lợi trong việc mở rộng sau này.
 
 Những nội dung được trình bày trong chương này là cơ sở để xây dựng các phần phân tích, thiết kế, triển khai và kiểm thử hệ thống được trình bày trong Chương 2 và Chương 3 của báo cáo.
-```
 
 
 

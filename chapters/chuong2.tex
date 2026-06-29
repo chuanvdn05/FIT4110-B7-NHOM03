@@ -2,7 +2,6 @@
 
 \chapter{PHÂN TÍCH, THIẾT KẾ VÀ TRIỂN KHAI NOTIFICATION SERVICE}
 
-```latex
 \section{Kiến trúc Notification Service}
 
 Notification Service là dịch vụ do nhóm B7 phát triển trong hệ thống Smart Campus Operations Platform. Service này được xây dựng theo kiến trúc Microservices và triển khai bằng framework FastAPI trên nền tảng Python 3.11. Notification Service có nhiệm vụ tiếp nhận các cảnh báo (Alert) từ Core Business Service, xử lý yêu cầu gửi thông báo, lưu lịch sử xử lý và cung cấp dữ liệu cho Analytics Service.
@@ -185,8 +184,7 @@ Uvicorn
 \caption{Quy trình Build Docker Image của Notification Service}
 \label{fig:dockerfile-build}
 \end{figure}
-```
-```latex
+
 \section{Framework FastAPI}
 
 Notification Service của nhóm B7 được phát triển bằng framework FastAPI trên nền tảng Python 3.11. FastAPI là một framework hiện đại dành cho việc xây dựng RESTful API với hiệu năng cao, hỗ trợ bất đồng bộ (Asynchronous Programming) và tự động sinh tài liệu OpenAPI.
@@ -321,8 +319,7 @@ Failed
 \caption{Quy trình Retry và Idempotency}
 \label{fig:retry-idempotency}
 \end{figure}
-```
-```latex
+
 \section{Thiết kế cơ sở dữ liệu}
 
 Để đảm bảo khả năng lưu trữ lịch sử xử lý thông báo và phục vụ việc thống kê sau này, Notification Service sử dụng hệ quản trị cơ sở dữ liệu PostgreSQL. Trong quá trình khởi động, hệ thống sẽ tự động kiểm tra và tạo bảng dữ liệu nếu bảng chưa tồn tại thông qua hàm khởi tạo cơ sở dữ liệu trong file \texttt{main.py}.
@@ -580,4 +577,3 @@ Các lớp chính bao gồm:
 Các Model này giúp kiểm tra dữ liệu đầu vào, chuẩn hóa Response và sinh tài liệu OpenAPI tự động.
 
 Nhờ sử dụng Pydantic, hệ thống giảm đáng kể lượng mã kiểm tra dữ liệu thủ công, đồng thời đảm bảo dữ liệu trao đổi giữa các service luôn đúng định dạng.
-```
